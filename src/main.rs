@@ -2,10 +2,11 @@
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     use actix_files::Files;
-    use actix_web::*;
+    use actix_web::{middleware::Logger, *};
     use leptos::*;
-    use leptos_actix::{generate_route_list, LeptosRoutes};
+    use leptos_actix::{generate_route_list, handle_server_fns, LeptosRoutes};
     use leptos_actix_middleware::app::*;
+    use leptos_actix_middleware::ssr::middleware::JwtMiddleware;
 
     let conf = get_configuration(None).await.unwrap();
     let addr = conf.leptos_options.site_addr;
@@ -18,12 +19,21 @@ async fn main() -> std::io::Result<()> {
         let site_root = &leptos_options.site_root;
 
         App::new()
+            .wrap(Logger::default())
             // serve JS/WASM/CSS from `pkg`
             .service(Files::new("/pkg", format!("{site_root}/pkg")))
             // serve other assets from the `assets` directory
             .service(Files::new("/assets", site_root))
             // serve the favicon from /favicon.ico
             .service(favicon)
+            // handle api first
+            // https://github.com/leptos-rs/leptos/pull/2435
+            .route("/api/{login:login.*}", handle_server_fns())
+            .service(
+                web::scope("/api")
+                    .wrap(JwtMiddleware)
+                    .route("/{func_name:.*}", handle_server_fns()),
+            )
             .leptos_routes(leptos_options.to_owned(), routes.to_owned(), App)
             .app_data(web::Data::new(leptos_options.to_owned()))
         //.wrap(middleware::Compress::default())

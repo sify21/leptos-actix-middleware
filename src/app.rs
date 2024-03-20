@@ -1,6 +1,7 @@
 use leptos::*;
 use leptos_meta::*;
 use leptos_router::*;
+use server_fn::codec::GetUrl;
 
 #[component]
 pub fn App() -> impl IntoView {
@@ -8,8 +9,6 @@ pub fn App() -> impl IntoView {
     provide_meta_context();
 
     view! {
-        // injects a stylesheet into the document <head>
-        // id=leptos means cargo-leptos will hot-reload this stylesheet
         <Stylesheet id="leptos" href="/pkg/leptos-actix-middleware.css"/>
 
         // sets the document title
@@ -30,13 +29,21 @@ pub fn App() -> impl IntoView {
 /// Renders the home page of your application.
 #[component]
 fn HomePage() -> impl IntoView {
-    // Creates a reactive value to update the button
-    let (count, set_count) = create_signal(0);
-    let on_click = move |_| set_count.update(|count| *count += 1);
+    let username = create_resource(|| {}, |_| get_username());
 
     view! {
         <h1>"Welcome to Leptos!"</h1>
-        <button on:click=on_click>"Click Me: " {count}</button>
+        <button on:click=move |_| { username.refetch() }>"Reload"</button>
+        <Suspense fallback=move || {
+            view! { <p>Loading ...</p> }
+        }>
+            {move || {
+                username
+                    .get()
+                    .map(|call_result| { call_result.map(|username| view! { <p>{username}</p> }) })
+            }}
+
+        </Suspense>
     }
 }
 
@@ -57,7 +64,18 @@ fn NotFound() -> impl IntoView {
         resp.set_status(actix_web::http::StatusCode::NOT_FOUND);
     }
 
-    view! {
-        <h1>"Not Found"</h1>
-    }
+    view! { <h1>"Not Found"</h1> }
+}
+#[server(input=GetUrl)]
+pub async fn get_username() -> Result<String, ServerFnError> {
+    use crate::ssr::middleware::JwtClaims;
+    use leptos_actix::extract;
+    use std::time::Duration;
+
+    println!("==server_fn called==");
+    let (jwt_claims,) = extract::<(JwtClaims,)>().await?;
+
+    tokio::time::sleep(Duration::from_secs(5)).await;
+    println!("==server_fn end==\n");
+    Ok(jwt_claims.username)
 }
