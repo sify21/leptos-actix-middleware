@@ -7,7 +7,12 @@ async fn main() -> std::io::Result<()> {
     use leptos_actix::{generate_route_list, handle_server_fns, LeptosRoutes};
     use leptos_actix_middleware::app::*;
     use leptos_actix_middleware::ssr::middleware::JwtMiddleware;
+    use simple_logger::SimpleLogger;
 
+    SimpleLogger::new()
+        .with_level(log::LevelFilter::Info)
+        .init()
+        .unwrap();
     let conf = get_configuration(None).await.unwrap();
     let addr = conf.leptos_options.site_addr;
     // Generate the list of routes in your Leptos App

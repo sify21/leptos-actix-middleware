@@ -10,6 +10,8 @@ pub fn hydrate() {
     use leptos::*;
 
     console_error_panic_hook::set_once();
+    #[cfg(debug_assertions)]
+    console_log::init().ok();
 
     mount_to_body(App);
 }

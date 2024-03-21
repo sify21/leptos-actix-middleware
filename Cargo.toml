@@ -11,6 +11,8 @@ crate-type = ["cdylib", "rlib"]
 leptos = "0.6"
 leptos_meta = "0.6"
 leptos_router = "0.6"
+leptos-use = { version = "0.10", features = ["serde"] }
+cookie = "0.18"
 # this version must equal to cargo-leptos(wasm-bingen-cli-support)
 wasm-bindgen = "0.2.92"
 
@@ -20,17 +22,21 @@ serde_json = "1"
 serde_qs = "0"
 chrono = { version = "0", features = ["serde"] }
 
+# logging
+log = "0"
+
 # server-side only
 leptos_actix = { version = "0.6", optional = true }
 actix-files = { version = "0.6", optional = true }
 actix-web = { version = "4", optional = true, features = ["macros"] }
 thiserror = { version = "1", optional = true }
 tokio = { version = "1", optional = true, features = ["sync", "macros", "rt-multi-thread", "process", "fs"] }
+simple_logger= { version = "4", optional = true }
 
 
 # client-side only
 console_error_panic_hook = { version = "0", optional = true } # frontend panic
-
+console_log = { version = "1", optional = true, features = ["color"] } # frontend logger
 
 [features]
 csr = [
@@ -38,22 +44,27 @@ csr = [
     "leptos_meta/csr", 
     "leptos_router/csr",
     "dep:console_error_panic_hook",
+    "dep:console_log",
 ]
 hydrate = [
     "leptos/hydrate", 
     "leptos_meta/hydrate", 
     "leptos_router/hydrate",
     "dep:console_error_panic_hook",
+    "dep:console_log",
 ]
 ssr = [
     "leptos/ssr",
     "leptos_meta/ssr",
     "leptos_router/ssr",
+    "leptos-use/ssr",
+    "leptos-use/actix",
     "dep:actix-files",
     "dep:actix-web",
     "dep:leptos_actix",
     "dep:thiserror",
     "dep:tokio",
+    "dep:simple_logger",
 ]
 
 # Defines a size-optimized profile for the WASM bundle in release mode
