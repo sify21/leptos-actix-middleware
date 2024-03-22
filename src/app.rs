@@ -5,6 +5,8 @@ use leptos_router::*;
 use leptos_use::{use_cookie_with_options, utils::FromToStringCodec, UseCookieOptions};
 use server_fn::codec::GetUrl;
 
+pub mod cookie_page;
+
 #[derive(Debug, Clone)]
 pub struct AppData {
     pub cookie1: Signal<Option<String>>,
@@ -69,8 +71,9 @@ pub fn App() -> impl IntoView {
             <main>
                 <Routes>
                     <Route path="" view=HomePage/>
-                    <Route path="/cookie1" view=CookiePage1/>
-                    <Route path="/cookie2" view=CookiePage2/>
+                    <Route path="/cookie1" view=cookie_page::CookiePage1/>
+                    <Route path="/local-cookie1" view=cookie_page::LocalCookiePage1/>
+                    <Route path="/cookie2" view=cookie_page::CookiePage2/>
                 </Routes>
             </main>
         </Router>
@@ -98,53 +101,6 @@ fn HomePage() -> impl IntoView {
     }
 }
 
-#[component]
-fn CookiePage1() -> impl IntoView {
-    let navigate = use_navigate();
-    let AppData { set_cookie2, .. } = expect_context::<AppData>();
-    let validate = create_server_action::<Validate>();
-    let validate_result = validate.value();
-    view! {
-        <h1>This is CookiePage1</h1>
-        <A href="/cookie2">"Go to CookiePage2"</A>
-        <ActionForm action=validate>
-            <input type="text" name="first" placeholder="first"/>
-            <input type="text" name="second" placeholder="second"/>
-            <input type="submit" value="Validate"/>
-        </ActionForm>
-        <p>
-            {move || {
-                match validate_result.get() {
-                    Some(Ok(s)) => {
-                        set_cookie2.set(Some(s));
-                        navigate(
-                            "/cookie2",
-                            NavigateOptions {
-                                resolve: false,
-                                replace: true,
-                                ..Default::default()
-                            },
-                        );
-                        None
-                    }
-                    Some(Err(ServerFnError::ServerError(e))) => {
-                        Some(format!("validate error: {}", e))
-                    }
-                    Some(Err(e)) => Some(format!("unknown error: {}", e)),
-                    None => Some("No value yet!".to_string()),
-                }
-            }}
-
-        </p>
-    }
-}
-#[component]
-fn CookiePage2() -> impl IntoView {
-    view! {
-        <h1>This is CookiePage2</h1>
-        <A href="/cookie1">"Go to CookiePage1"</A>
-    }
-}
 #[server(input=GetUrl)]
 pub async fn get_username() -> Result<String, ServerFnError> {
     use crate::ssr::middleware::JwtClaims;
@@ -157,12 +113,4 @@ pub async fn get_username() -> Result<String, ServerFnError> {
     tokio::time::sleep(Duration::from_secs(5)).await;
     println!("==server_fn end==\n");
     Ok(jwt_claims.username)
-}
-#[server]
-pub async fn validate(first: String, second: String) -> Result<String, ServerFnError> {
-    if first.eq(&second) {
-        Ok("Same".to_string())
-    } else {
-        Err(ServerFnError::new("Different"))
-    }
 }

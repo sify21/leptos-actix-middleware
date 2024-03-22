@@ -37,6 +37,7 @@ simple_logger= { version = "4", optional = true }
 # client-side only
 console_error_panic_hook = { version = "0", optional = true } # frontend panic
 console_log = { version = "1", optional = true, features = ["color"] } # frontend logger
+gloo = { version = "0", optional = true }
 
 [features]
 csr = [
@@ -45,6 +46,7 @@ csr = [
     "leptos_router/csr",
     "dep:console_error_panic_hook",
     "dep:console_log",
+    "dep:gloo",
 ]
 hydrate = [
     "leptos/hydrate", 
@@ -52,6 +54,7 @@ hydrate = [
     "leptos_router/hydrate",
     "dep:console_error_panic_hook",
     "dep:console_log",
+    "dep:gloo",
 ]
 ssr = [
     "leptos/ssr",
