@@ -19,6 +19,15 @@ pub struct AppData {
 pub fn App() -> impl IntoView {
     // Provides context that manages stylesheets, titles, meta tags, etc.
     provide_meta_context();
+    // 展示wasm是运行在sandbox里的，每次加载wasm文件(比如浏览器刷新网页)都会创建sandbox
+    // thread_local!的Runtime也是这个sandbox的thread
+    // 也展示#[component]只运行一次(前端路由时，因为App是最外层的HtmlElement)，除非rerender。返回的HtmlElement有on_mount和on_cleanup
+    let ctx = use_context::<AppData>();
+    if ctx.is_none() {
+        log::info!("ctx is none!");
+    } else {
+        log::info!("ctx is some!");
+    }
     let (cookie1, set_cookie1) = use_cookie_with_options::<String, FromToStringCodec>(
         "cookie1",
         UseCookieOptions::default()
